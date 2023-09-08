@@ -1,10 +1,12 @@
 package com.avatar.challenge.planner.challenge.domain;
 
 
-import com.avatar.challenge.planner.common.BaseDomain;
+import com.avatar.challenge.planner.common.BaseEntity;
+import com.avatar.challenge.planner.exception.NotPositiveNumberException;
 import com.avatar.challenge.planner.exception.RequiredArgumentException;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.util.StringUtils;
 
@@ -16,36 +18,54 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("challenge")
-public class Challenge extends BaseDomain {
+public class Challenge extends BaseEntity {
+    private static final Integer ZERO = 0;
+
     @Id
     private Long id;
 
     private String name;
-    private Period period;
+    private Integer period;
     private LocalDate startDate;
     private LocalDate endDate;
     private ChallengeStatus status;
 
-    public Challenge(String name, Period period, LocalDate startDate) {
-        validate(name, startDate);
+    public Challenge(String name, Integer period, LocalDate startDate) {
+        validate(name, period, startDate);
         this.name = name;
         this.period = period;
         this.startDate = startDate;
-        this.endDate =  startDate.plusDays(period.getPeriod());
+        this.endDate =  startDate.plusDays(period);
         this.status = ChallengeStatus.BEFORE;
     }
 
     public static Challenge of(String name, Integer period, LocalDate startDate){
-        return new Challenge(name, Period.valueOf(period), startDate);
+        return new Challenge(name, period, startDate);
     }
 
     public void changeStatus(ChallengeStatus status){
         this.status = status;
     }
 
-    private void validate(String name, LocalDate startDate) {
+    public void updateChallenge(Challenge challenge){
+        this.name = challenge.name;
+        this.period = challenge.period;
+        this.startDate = challenge.startDate;
+        this.endDate = challenge.endDate;
+        this.status = challenge.status;
+    }
+
+    private void validate(String name, Integer period, LocalDate startDate) {
         if (!StringUtils.hasLength(name)){
             throw new RequiredArgumentException("챌린지 명은 필수입니다.");
+        }
+
+        if (period == null){
+            throw new RequiredArgumentException("챌린지 기간은 필수입니다.");
+        }
+
+        if (period <= ZERO){
+            throw new NotPositiveNumberException();
         }
 
         if(startDate == null){

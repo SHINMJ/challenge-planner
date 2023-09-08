@@ -20,7 +20,7 @@ public class DailyList {
 
     public long numberOfCompleted(){
         return dailies.stream()
-                .filter(daily -> daily.getIsComplete() == Boolean.TRUE)
+                .filter(daily -> daily.getCompleteAt() == Boolean.TRUE)
                 .count();
     }
 

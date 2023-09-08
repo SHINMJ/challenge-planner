@@ -7,7 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
-public class BaseDomain {
+public class BaseEntity {
 
     @CreatedBy
     private String createdBy;
@@ -19,5 +19,5 @@ public class BaseDomain {
     private String lastModifiedBy;
 
     @LastModifiedDate
-    private LocalDateTime modifiedAt;
+    private LocalDateTime lastModifiedAt;
 }

@@ -1,5 +1,6 @@
 package com.avatar.challenge.planner.challenge.domain;
 
+import com.avatar.challenge.planner.common.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,15 +13,15 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("daily")
-public class Daily {
+public class Daily extends BaseEntity {
 
     @Id
     private Long id;
 
     private Long challengeId;
-    private Integer day;
-    private Boolean isComplete;
-    private String memo;
+    private Integer days;
+    private Boolean completeAt;
+    private String comment;
     private Long ownerId;
 
     public static Daily of(Long challengeId, Integer day, Long ownerId){
@@ -28,11 +29,11 @@ public class Daily {
     }
 
     public void completion() {
-        this.isComplete = Boolean.TRUE;
+        this.completeAt = Boolean.TRUE;
     }
 
     public void incomplete(){
-        this.isComplete = Boolean.FALSE;
+        this.completeAt = Boolean.FALSE;
     }
 
     @Override
@@ -40,11 +41,11 @@ public class Daily {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Daily daily = (Daily) o;
-        return challengeId.equals(daily.challengeId) && day.equals(daily.day) && ownerId.equals(daily.ownerId);
+        return challengeId.equals(daily.challengeId) && days.equals(daily.days) && ownerId.equals(daily.ownerId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(challengeId, day, ownerId);
+        return Objects.hash(challengeId, days, ownerId);
     }
 }

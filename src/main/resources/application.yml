@@ -5,6 +5,9 @@ spring:
     password:
   logging:
     level:
+      io:
+        r2dbc:
+          h2: TRACE
       org:
         springframework:
           r2dbc: DEBUG
