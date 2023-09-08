@@ -5,4 +5,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface ChallengeRepository extends ReactiveCrudRepository<Challenge, Long> {
+    Flux<Challenge> findAllByOwnerIdOrderByStartDateDesc(Long ownerId);
+    Flux<Challenge> findAllByOwnerIdAndStatusOrderByStartDateDesc(Long ownerId, ChallengeStatus status);
 }

@@ -6,7 +6,6 @@ import com.avatar.challenge.planner.exception.NotPositiveNumberException;
 import com.avatar.challenge.planner.exception.RequiredArgumentException;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.util.StringUtils;
 
@@ -29,18 +28,28 @@ public class Challenge extends BaseEntity {
     private LocalDate startDate;
     private LocalDate endDate;
     private ChallengeStatus status;
+    private Long ownerId;
 
-    public Challenge(String name, Integer period, LocalDate startDate) {
+    public Challenge(String name, Integer period, LocalDate startDate, Long ownerId) {
         validate(name, period, startDate);
         this.name = name;
         this.period = period;
         this.startDate = startDate;
         this.endDate =  startDate.plusDays(period);
-        this.status = ChallengeStatus.BEFORE;
+        this.ownerId = ownerId;
+        setStatus(startDate);
     }
 
-    public static Challenge of(String name, Integer period, LocalDate startDate){
-        return new Challenge(name, period, startDate);
+    private void setStatus(LocalDate startDate) {
+        if (startDate.isAfter(LocalDate.now())){
+            this.status = ChallengeStatus.BEFORE;
+            return;
+        }
+        this.status = ChallengeStatus.ONGOING;
+    }
+
+    public static Challenge of(String name, Integer period, LocalDate startDate, Long ownerId){
+        return new Challenge(name, period, startDate, ownerId);
     }
 
     public void changeStatus(ChallengeStatus status){

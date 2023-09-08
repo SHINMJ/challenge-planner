@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,7 +37,7 @@ public class ChallengeRepositoryTest {
     @Test
     void create() {
         LocalDate startDate = LocalDate.of(2023, 8, 31);
-        Challenge challenge = Challenge.of("pushup 30일 100개 하기", 30, startDate);
+        Challenge challenge = Challenge.of("pushup 30일 100개 하기", 30, startDate, 1L);
 
 
         Flux<Challenge> flux = challengeRepository.save(challenge)
@@ -49,14 +50,13 @@ public class ChallengeRepositoryTest {
 
     @Test
     void update() {
-        LocalDate startDate = LocalDate.of(2023, 8, 31);
-        Challenge challenge = Challenge.of("pushup 30일 100개 하기", 30, startDate);
+        Challenge challenge = Challenge.of("pushup 30일 100개 하기", 30, LocalDate.now().plusDays(2), 1L);
 
         insertChallenge(challenge);
 
         challengeRepository.findById(challenge.getId())
                 .map(c -> {
-                    Challenge update = Challenge.of(c.getName(), 10, c.getStartDate());
+                    Challenge update = Challenge.of(c.getName(), 10, c.getStartDate(), 1L);
                     update.changeStatus(ChallengeStatus.ONGOING);
                     c.updateChallenge(update);
                     return c;
@@ -73,10 +73,34 @@ public class ChallengeRepositoryTest {
                 .verifyComplete();
     }
 
-    private void insertChallenge(Challenge challenge){
-        challengeRepository.save(challenge)
+    @Test
+    void findAllByOwnerIdOrderByStartDateDesc() {
+        Challenge c1 = Challenge.of("pushup 30일 100개 하기", 30, LocalDate.now().plusDays(2), 2L);
+        Challenge c2 = Challenge.of("스쿼트 30일 50개 하기", 30, LocalDate.now().plusDays(6), 2L);
+        insertChallenge(c1, c2);
+
+        challengeRepository.findAllByOwnerIdOrderByStartDateDesc(2L)
                 .as(StepVerifier::create)
-                .expectNextCount(1L)
+                .expectNextCount(2)
+                .verifyComplete();
+    }
+
+    @Test
+    void findAllByOwnerIdAndStatusOrderByStartDateDesc() {
+        Challenge c1 = Challenge.of("pushup 30일 100개 하기", 30, LocalDate.now().minusDays(2), 3L);
+        Challenge c2 = Challenge.of("스쿼트 30일 50개 하기", 30, LocalDate.now().plusDays(6), 3L);
+        insertChallenge(c1, c2);
+
+        challengeRepository.findAllByOwnerIdAndStatusOrderByStartDateDesc(3L, ChallengeStatus.ONGOING)
+                .as(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+
+    private void insertChallenge(Challenge... challenge){
+        challengeRepository.saveAll(Arrays.asList(challenge))
+                .as(StepVerifier::create)
+                .expectNextCount(Arrays.stream(challenge).count())
                 .verifyComplete();
     }
 }

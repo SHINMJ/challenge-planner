@@ -5,6 +5,7 @@ CREATE TABLE challenge (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     status VARCHAR(10) NOT NULL,
+    owner_id INT NOT NULL,
     created_by VARCHAR(50),
     created_at DATETIME,
     last_modified_by VARCHAR(50),
