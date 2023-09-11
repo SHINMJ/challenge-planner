@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Transactional
 @RequiredArgsConstructor
+@Transactional
 @Service
 public class ChallengeService {
     private final ChallengeRepository repository;
@@ -47,12 +47,15 @@ public class ChallengeService {
                 .map(ChallengeResponse::of);
     }
 
-    private Mono<Challenge> findById(Long id){
-        return repository.findById(id);
-    }
 
+    @Transactional(readOnly = true)
     public Flux<ChallengeResponse> findOngoingByOwnerId(Long ownerId) {
         return repository.findAllByOwnerIdAndStatusOrderByStartDateDesc(ownerId, ChallengeStatus.ONGOING)
                 .map(ChallengeResponse::of);
     }
+
+    private Mono<Challenge> findById(Long id){
+        return repository.findById(id);
+    }
+
 }
