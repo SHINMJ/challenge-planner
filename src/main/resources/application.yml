@@ -12,3 +12,8 @@ spring:
         springframework:
           r2dbc: DEBUG
   debug: true
+
+jwt:
+  secret: YXZhdGFydHJpcGF1dGhvcml6YXRpb25qd3RtYW5hZ2VzZWNyZXRrZXkK
+  expired-in: 600000 # 10 min
+  refresh-expired-in: 86400000 # 24 hour

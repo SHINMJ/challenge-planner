@@ -20,7 +20,7 @@ public class Daily extends BaseEntity {
 
     private Long challengeId;
     private Integer days;
-    private Boolean completeAt;
+    private Boolean completedAt;
     private String comment;
     private Long ownerId;
 
@@ -29,11 +29,11 @@ public class Daily extends BaseEntity {
     }
 
     public void completion() {
-        this.completeAt = Boolean.TRUE;
+        this.completedAt = Boolean.TRUE;
     }
 
     public void incomplete(){
-        this.completeAt = Boolean.FALSE;
+        this.completedAt = Boolean.FALSE;
     }
 
     @Override
