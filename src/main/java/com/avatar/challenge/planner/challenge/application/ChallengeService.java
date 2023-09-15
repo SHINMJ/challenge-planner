@@ -5,6 +5,8 @@ import com.avatar.challenge.planner.challenge.domain.ChallengeRepository;
 import com.avatar.challenge.planner.challenge.domain.ChallengeStatus;
 import com.avatar.challenge.planner.challenge.dto.ChallengeRequest;
 import com.avatar.challenge.planner.challenge.dto.ChallengeResponse;
+import com.avatar.challenge.planner.exception.UnauthorizedException;
+import com.avatar.challenge.planner.user.dto.LoginUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,28 +19,27 @@ import reactor.core.publisher.Mono;
 public class ChallengeService {
     private final ChallengeRepository repository;
 
-    public Mono<ChallengeResponse> create(ChallengeRequest request) {
-        Long userId = 1L;
-        return repository.save(request.toEntity(userId))
+    public Mono<ChallengeResponse> create(ChallengeRequest request, LoginUser loginUser) {
+        return repository.save(request.toEntity(loginUser.getId()))
                 .map(ChallengeResponse::of);
 
     }
 
     @Transactional(readOnly = true)
-    public Mono<ChallengeResponse> findResponseById(Long id) {
-        return this.findById(id)
+    public Mono<ChallengeResponse> findResponseById(Long id, LoginUser loginUser) {
+        return findByIdWithOwner(id, loginUser)
                 .map(ChallengeResponse::of);
     }
 
     @Transactional(readOnly = true)
-    public Flux<ChallengeResponse> findResponseByOwnerId(Long id) {
+    public Flux<ChallengeResponse> findResponseByOwnerId(LoginUser loginUser) {
 
-        return repository.findAllByOwnerIdOrderByStartDateDesc(id)
+        return repository.findAllByOwnerIdOrderByStartDateDesc(loginUser.getId())
                 .map(ChallengeResponse::of);
     }
 
-    public Mono<ChallengeResponse> changeStatus(Long id, String status) {
-        return this.findById(id)
+    public Mono<ChallengeResponse> changeStatus(LoginUser loginUser, Long id, String status) {
+        return findByIdWithOwner(id, loginUser)
                 .map(challenge -> {
                     challenge.changeStatus(ChallengeStatus.valueOf(status));
                     return challenge;
@@ -49,13 +50,19 @@ public class ChallengeService {
 
 
     @Transactional(readOnly = true)
-    public Flux<ChallengeResponse> findOngoingByOwnerId(Long ownerId) {
-        return repository.findAllByOwnerIdAndStatusOrderByStartDateDesc(ownerId, ChallengeStatus.ONGOING)
+    public Flux<ChallengeResponse> findOngoingByOwnerId(LoginUser loginUser) {
+        return repository.findAllByOwnerIdAndStatusOrderByStartDateDesc(loginUser.getId(), ChallengeStatus.ONGOING)
                 .map(ChallengeResponse::of);
     }
 
-    private Mono<Challenge> findById(Long id){
-        return repository.findById(id);
+    private Mono<Challenge> findByIdWithOwner(Long id, LoginUser loginUser){
+        return repository.findById(id)
+                .flatMap(challenge -> {
+                    if (!challenge.isOwner(loginUser.getId())){
+                        return Mono.error(new UnauthorizedException("권한이 없습니다."));
+                    }
+                    return Mono.just(challenge);
+                });
     }
 
 }

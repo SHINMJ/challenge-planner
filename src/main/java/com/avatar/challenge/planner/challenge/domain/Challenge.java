@@ -64,6 +64,10 @@ public class Challenge extends BaseEntity {
         this.status = challenge.status;
     }
 
+    public boolean isOwner(Long ownerId) {
+        return this.ownerId.equals(ownerId);
+    }
+
     private void validate(String name, Integer period, LocalDate startDate) {
         if (!StringUtils.hasLength(name)){
             throw new RequiredArgumentException("챌린지 명은 필수입니다.");
@@ -94,4 +98,5 @@ public class Challenge extends BaseEntity {
     public int hashCode() {
         return Objects.hash(id);
     }
+
 }
