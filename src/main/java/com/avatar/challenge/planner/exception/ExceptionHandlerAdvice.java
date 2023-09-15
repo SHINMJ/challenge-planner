@@ -59,7 +59,7 @@ public class ExceptionHandlerAdvice {
     @ExceptionHandler(BizException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(BizException e) {
         log.error("handleBusinessException", e);
-        return errorResponse(ErrorResponse.of(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+        return errorResponse(ErrorResponse.of(e.getMessage(), HttpStatus.BAD_REQUEST));
     }
 
     private ResponseEntity<ErrorResponse> errorResponse(final ErrorResponse response){

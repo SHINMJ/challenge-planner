@@ -72,4 +72,20 @@ class UserRepositoryTest {
                 .expectNextCount(0)
                 .verifyComplete();
     }
+
+    @Test
+    void findByRefreshToken() {
+        User testUser = User.of("test@email.com", "1111", "testUser");
+        testUser.updateRefreshToken("refreshToken");
+        repository.saveAll(Arrays.asList(testUser))
+                .as(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete();
+
+        repository.findByRefreshToken("refreshToken")
+                .as(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+
 }

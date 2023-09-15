@@ -1,21 +1,31 @@
 package com.avatar.challenge.planner.auth.application;
 
 import com.avatar.challenge.planner.auth.config.TokenProvider;
+import com.avatar.challenge.planner.auth.dto.JoinRequest;
 import com.avatar.challenge.planner.auth.dto.LoginRequest;
+import com.avatar.challenge.planner.auth.dto.TokenRequest;
 import com.avatar.challenge.planner.auth.dto.TokenResponse;
+import com.avatar.challenge.planner.exception.BizException;
+import com.avatar.challenge.planner.exception.InvalidTokenException;
 import com.avatar.challenge.planner.exception.UnauthorizedException;
+import com.avatar.challenge.planner.user.application.UserService;
+import com.avatar.challenge.planner.user.dto.UserRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+@Transactional
 @RequiredArgsConstructor
 @Service
 public class AuthService {
 
     private final TokenProvider tokenProvider;
     private final ReactiveAuthenticationManager authenticationManager;
+    private final UserService userService;
 
     public Mono<TokenResponse> login(LoginRequest request) {
         if (request.isEmpty()){
@@ -27,6 +37,36 @@ public class AuthService {
 
         return authenticationManager.authenticate(authenticationToken)
                 .onErrorMap(error -> new UnauthorizedException(error.getMessage()))
-                .map(tokenProvider::generateToken);
+                .map(tokenProvider::generateToken)
+                .flatMap(tokenResponse -> updateRefreshToken(request.getEmail(), tokenResponse));
     }
+
+    public Mono<TokenResponse> reissue(TokenRequest request) {
+        try {
+            tokenProvider.validate(request.getRefreshToken());
+        }catch (Exception e) {
+            return Mono.error(new InvalidTokenException(e.getMessage()));
+        }
+
+        return userService.findTokenByRefreshToken(request.getRefreshToken())
+                .flatMap(refreshToken -> {
+                    Authentication authentication = tokenProvider.getAuthentication(refreshToken);
+                    TokenResponse tokenResponse = tokenProvider.generateToken(authentication);
+                    return Mono.just(authentication.getName()).zipWith(Mono.just(tokenResponse));
+                })
+                .onErrorMap(error -> new UnauthorizedException(error.getMessage()))
+                .flatMap(tuple -> updateRefreshToken(tuple.getT1(), tuple.getT2()));
+
+    }
+
+    public Mono<Void> join(JoinRequest request) {
+        return userService.create(new UserRequest(request.getEmail(), request.getPassword(), request.getNickname()))
+                .then();
+    }
+
+    private Mono<TokenResponse> updateRefreshToken(String email, TokenResponse tokenResponse){
+        return userService.updateRefreshToken(email, tokenResponse.getRefreshToken())
+                .thenReturn(tokenResponse);
+    }
+
 }

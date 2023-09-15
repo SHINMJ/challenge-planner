@@ -1,11 +1,14 @@
 package com.avatar.challenge.planner.utils;
 
+import com.avatar.challenge.planner.auth.config.TokenProvider;
+import com.avatar.challenge.planner.auth.dto.TokenResponse;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.ActiveProfiles;
@@ -32,6 +35,9 @@ public class DatabaseInitialize {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    TokenProvider tokenProvider;
+
     @Transactional
     public Mono<Void> execute() {
         String query = null;
@@ -47,10 +53,10 @@ public class DatabaseInitialize {
     }
 
     @Transactional
-    public Mono<Void> saveInitData(){
+    public Mono<Void> saveInitData(String refreshToken){
         String encodePassword = passwordEncoder.encode(TEST_PASSWORD);
         return template.getDatabaseClient()
-                .sql("insert into users (email, password, nickname) values ('"+TEST_USER+"', '"+encodePassword+"', 'testUser');")
+                .sql("insert into users (email, password, nickname, refresh_token) values ('"+TEST_USER+"', '"+encodePassword+"', 'testUser', '"+refreshToken+"');")
                 .then();
 
     }
