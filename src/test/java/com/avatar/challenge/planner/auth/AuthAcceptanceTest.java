@@ -113,7 +113,7 @@ public class AuthAcceptanceTest extends AcceptanceTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(new JoinRequest(TEST_USER, TEST_PASSWORD, "testUser")), JoinRequest.class)
                 .exchange()
-                .expectStatus().isCreated()
+                .expectStatus().is4xxClientError()
                 .expectBody();
 
     }

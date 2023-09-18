@@ -5,7 +5,6 @@ import com.avatar.challenge.planner.auth.dto.JoinRequest;
 import com.avatar.challenge.planner.auth.dto.LoginRequest;
 import com.avatar.challenge.planner.auth.dto.TokenRequest;
 import com.avatar.challenge.planner.auth.dto.TokenResponse;
-import com.avatar.challenge.planner.exception.BizException;
 import com.avatar.challenge.planner.exception.InvalidTokenException;
 import com.avatar.challenge.planner.exception.UnauthorizedException;
 import com.avatar.challenge.planner.user.application.UserService;
@@ -13,7 +12,6 @@ import com.avatar.challenge.planner.user.dto.UserRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -37,7 +35,9 @@ public class AuthService {
 
         return authenticationManager.authenticate(authenticationToken)
                 .onErrorMap(error -> new UnauthorizedException(error.getMessage()))
+                .log("authentication token")
                 .map(tokenProvider::generateToken)
+                .log("generate token")
                 .flatMap(tokenResponse -> updateRefreshToken(request.getEmail(), tokenResponse));
     }
 
@@ -49,14 +49,12 @@ public class AuthService {
         }
 
         return userService.findTokenByRefreshToken(request.getRefreshToken())
-                .flatMap(refreshToken -> {
-                    Authentication authentication = tokenProvider.getAuthentication(refreshToken);
-                    TokenResponse tokenResponse = tokenProvider.generateToken(authentication);
-                    return Mono.just(authentication.getName()).zipWith(Mono.just(tokenResponse));
-                })
+                .flatMap(refreshToken ->
+                    tokenProvider.getAuthentication(refreshToken)
+                            .zipWhen(authentication -> Mono.just(tokenProvider.generateToken(authentication)))
+                )
                 .onErrorMap(error -> new UnauthorizedException(error.getMessage()))
-                .flatMap(tuple -> updateRefreshToken(tuple.getT1(), tuple.getT2()));
-
+                .flatMap(tuple -> updateRefreshToken(tuple.getT1().getName(), tuple.getT2()));
     }
 
     public Mono<Void> join(JoinRequest request) {

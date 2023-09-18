@@ -20,6 +20,7 @@ public class ChallengeService {
     private final ChallengeRepository repository;
 
     public Mono<ChallengeResponse> create(ChallengeRequest request, LoginUser loginUser) {
+        System.out.println(loginUser);
         return repository.save(request.toEntity(loginUser.getId()))
                 .map(ChallengeResponse::of);
 

@@ -19,6 +19,7 @@ public class AuthController {
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<TokenResponse> login(@RequestBody LoginRequest request){
+        System.out.println("login");
         return service.login(request);
     }
 

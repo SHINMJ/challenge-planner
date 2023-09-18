@@ -1,13 +1,12 @@
 package com.avatar.challenge.planner.config;
 
-import com.avatar.challenge.planner.auth.config.JwtFilter;
 import com.avatar.challenge.planner.auth.config.TokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
@@ -17,19 +16,28 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
+import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
 @EnableReactiveMethodSecurity
 @Configuration
 public class SecurityConfig {
+    private static final String PERMIT_PATTERN = "/auth/**";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    private final TokenProvider tokenProvider;
 
     @Bean
     @DependsOn({"methodSecurityExpressionHandler"})
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-                                                         TokenProvider tokenProvider,
-                                                         ReactiveAuthenticationManager reactiveAuthenticationManager){
+                                                         ReactiveAuthenticationManager reactiveAuthenticationManager,
+                                                         AuthenticationWebFilter authenticationWebFilter
+    ){
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
@@ -43,13 +51,15 @@ public class SecurityConfig {
                                     exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                                 })))
                 )
-                .authenticationManager(reactiveAuthenticationManager)
-                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                        .pathMatchers("/auth/**").permitAll()
+                        .pathMatchers(PERMIT_PATTERN).permitAll()
                         .anyExchange().authenticated()
                 )
-                .addFilterAt(new JwtFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC);
+                .logout(ServerHttpSecurity.LogoutSpec::disable)
+                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+                .authenticationManager(reactiveAuthenticationManager)
+                .addFilterBefore(authenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
+                ;
 
         return http.build();
     }
@@ -65,4 +75,39 @@ public class SecurityConfig {
         manager.setPasswordEncoder(passwordEncoder);
         return manager;
     }
+
+    @Bean
+    public AuthenticationWebFilter authenticationWebFilter(){
+        ReactiveAuthenticationManager authenticationManager = Mono::just;
+
+        AuthenticationWebFilter authenticationWebFilter = new AuthenticationWebFilter(authenticationManager);
+        authenticationWebFilter.setServerAuthenticationConverter(serverAuthenticationConverter());
+        return authenticationWebFilter;
+    }
+
+    private ServerAuthenticationConverter serverAuthenticationConverter(){
+        return exchange -> {
+            ServerHttpRequest request = exchange.getRequest();
+            String token = resolveToken(request);
+            if (request.getPath().toString().startsWith(PERMIT_PATTERN)){
+                return Mono.empty();
+            }
+
+            if (StringUtils.hasText(token) && tokenProvider.validate(token)){
+                return tokenProvider.getAuthentication(token);
+            }
+
+            return Mono.empty();
+        };
+
+    }
+
+    private String resolveToken(ServerHttpRequest request){
+        String bearerToken = request.getHeaders().getFirst(AUTHORIZATION_HEADER);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)){
+            return bearerToken.substring(BEARER_PREFIX.length());
+        }
+        return null;
+    }
+
 }

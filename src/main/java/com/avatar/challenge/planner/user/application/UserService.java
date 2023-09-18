@@ -26,7 +26,7 @@ public class UserService {
     }
 
     public Mono<UserResponse> create(UserRequest request) {
-        return repository.findByEmail(request.getEmail())
+        return repository.findByEmail(request.email())
                 .flatMap(user -> {
                     if (user != null) {
                         return Mono.error(new BizException("이미 사용중인 이메일입니다."));
@@ -34,7 +34,7 @@ public class UserService {
                     return request.toEntity();
                 })
                 .switchIfEmpty(request.toEntity())
-                .map(user -> user.updatePassword(passwordEncoder.encode(request.getPassword())))
+                .map(user -> user.updatePassword(passwordEncoder.encode(request.password())))
                 .flatMap(repository::save)
                 .map(UserResponse::of);
 

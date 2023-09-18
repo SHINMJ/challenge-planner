@@ -2,7 +2,9 @@ package com.avatar.challenge.planner.user.dto;
 
 import com.avatar.challenge.planner.user.domain.User;
 import com.avatar.challenge.planner.user.infra.CustomUserDetails;
+import lombok.ToString;
 
+@ToString
 public class LoginUser extends CustomUserDetails {
     private User user;
 

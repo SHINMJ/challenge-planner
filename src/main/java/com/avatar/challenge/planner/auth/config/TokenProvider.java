@@ -6,22 +6,23 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 import java.security.Key;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 @Component
 public class TokenProvider {
     private static final String AUTHORITIES_KEY = "auth ";
@@ -36,6 +37,8 @@ public class TokenProvider {
 
     private Key key;
     private JwtParser parser;
+
+    private final ReactiveUserDetailsService reactiveUserDetailsService;
 
     @PostConstruct
     public void init(){
@@ -52,18 +55,12 @@ public class TokenProvider {
         return TokenResponse.of(accessToken, refreshToken);
     }
 
-    public Authentication getAuthentication(String token){
+    public Mono<Authentication> getAuthentication(String token){
         Claims claims = parser.parseClaimsJws(token)
                 .getBody();
-
-        Object authoritiesClaim = claims.get(AUTHORITIES_KEY);
-
-        Collection<? extends GrantedAuthority> authorities = authoritiesClaim == null ? AuthorityUtils.NO_AUTHORITIES
-                : AuthorityUtils.commaSeparatedStringToAuthorityList(authoritiesClaim.toString());
-
-        User principal = new User(claims.getSubject(), "", authorities);
-
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        return reactiveUserDetailsService.findByUsername(claims.getSubject())
+                .map(userDetails ->
+                        new UsernamePasswordAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities()));
     }
 
     public boolean validate(String token){
