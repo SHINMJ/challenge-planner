@@ -6,12 +6,15 @@ import com.avatar.challenge.planner.challenge.dto.ChallengeResponse;
 import com.avatar.challenge.planner.user.dto.LoginUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.net.URI;
 
 @RequiredArgsConstructor
 @RestController
@@ -21,8 +24,10 @@ public class ChallengeController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Void> create(@RequestBody ChallengeRequest request, @AuthenticationPrincipal LoginUser loginUser){
-        return service.create(request, loginUser).then();
+    public Mono<ResponseEntity> create(@RequestBody ChallengeRequest request, @AuthenticationPrincipal LoginUser loginUser){
+        return service.create(request, loginUser)
+                .map(ChallengeResponse::getId)
+                .map(id -> ResponseEntity.created(URI.create("/challenges/"+id)).build());
     }
 
     @GetMapping
