@@ -123,7 +123,7 @@ public class ChallengeServiceTest {
         when(loginUser.getId())
                 .thenReturn(CHALLENGE.getOwnerId());
 
-        Mono<ChallengeResponse> response = service.changeStatus(loginUser, 1L, ChallengeStatus.DROP.toString());
+        Mono<ChallengeResponse> response = service.changeStatus(1L, ChallengeStatus.DROP.toString(), loginUser);
 
         StepVerifier.create(response)
                 .consumeNextWith(result -> assertEquals(result.getStatus(), ChallengeStatus.DROP.toString()))
@@ -141,6 +141,22 @@ public class ChallengeServiceTest {
 
         StepVerifier.create(response)
                 .expectNextCount(1)
+                .verifyComplete();
+    }
+
+    @Test
+    void findResponseByStatus() {
+        when(repository.findAllByOwnerIdAndStatusOrderByStartDateDesc(anyLong(), any()))
+                .thenReturn(Flux.just(CHALLENGE));
+        when(loginUser.getId())
+                .thenReturn(CHALLENGE.getOwnerId());
+
+        Flux<ChallengeResponse> response = service.findResponseByStatus(ChallengeStatus.ONGOING.getKey(), loginUser).log();
+
+        StepVerifier.create(response)
+                .assertNext(challengeResponse -> {
+                    assertEquals(challengeResponse.getStatus(), ChallengeStatus.ONGOING.getKey());
+                })
                 .verifyComplete();
     }
 }

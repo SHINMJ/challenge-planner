@@ -39,10 +39,10 @@ public class ChallengeService {
                 .map(ChallengeResponse::of);
     }
 
-    public Mono<ChallengeResponse> changeStatus(LoginUser loginUser, Long id, String status) {
+    public Mono<ChallengeResponse> changeStatus( Long id, String status, LoginUser loginUser) {
         return findByIdWithOwner(id, loginUser)
                 .map(challenge -> {
-                    challenge.changeStatus(ChallengeStatus.valueOf(status));
+                    challenge.changeStatus(ChallengeStatus.findByKey(status));
                     return challenge;
                 })
                 .flatMap(repository::save)
@@ -53,6 +53,18 @@ public class ChallengeService {
     @Transactional(readOnly = true)
     public Flux<ChallengeResponse> findOngoingByOwnerId(LoginUser loginUser) {
         return repository.findAllByOwnerIdAndStatusOrderByStartDateDesc(loginUser.getId(), ChallengeStatus.ONGOING)
+                .map(ChallengeResponse::of);
+    }
+
+    @Transactional(readOnly = true)
+    public Flux<ChallengeResponse> findAll(LoginUser loginUser) {
+        return repository.findAllByOwnerIdOrderByStartDateDesc(loginUser.getId())
+                .map(ChallengeResponse::of);
+    }
+
+    @Transactional(readOnly = true)
+    public Flux<ChallengeResponse> findResponseByStatus(String status, LoginUser loginUser) {
+        return repository.findAllByOwnerIdAndStatusOrderByStartDateDesc(loginUser.getId(), ChallengeStatus.findByKey(status))
                 .map(ChallengeResponse::of);
     }
 
