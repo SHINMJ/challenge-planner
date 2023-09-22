@@ -2,14 +2,14 @@ package com.avatar.challenge.planner.challenge;
 
 import com.avatar.challenge.planner.AcceptanceTest;
 import com.avatar.challenge.planner.challenge.domain.ChallengeStatus;
-import com.avatar.challenge.planner.challenge.dto.ChallengeRequest;
-import com.avatar.challenge.planner.challenge.dto.ChallengeResponse;
-import com.avatar.challenge.planner.challenge.dto.DailyRequest;
-import com.avatar.challenge.planner.challenge.dto.DailyResponse;
+import com.avatar.challenge.planner.challenge.dto.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -179,9 +179,5 @@ public class ChallengeAcceptanceTest extends AcceptanceTest {
                     assertEquals(responseBody.getName(), challengeName);
                     assertEquals(responseBody.getStatus(), ChallengeStatus.SUCCESS.getValue());
                 });
-
-
-
-
     }
 }

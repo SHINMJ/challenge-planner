@@ -5,12 +5,17 @@ import com.avatar.challenge.planner.challenge.domain.ChallengeRepository;
 import com.avatar.challenge.planner.challenge.domain.ChallengeStatus;
 import com.avatar.challenge.planner.challenge.dto.ChallengeRequest;
 import com.avatar.challenge.planner.challenge.dto.ChallengeResponse;
+import com.avatar.challenge.planner.challenge.dto.ChallengeStatusEvent;
 import com.avatar.challenge.planner.challenge.dto.DailyResponse;
 import com.avatar.challenge.planner.exception.UnauthorizedException;
 import com.avatar.challenge.planner.user.dto.LoginUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

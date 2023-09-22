@@ -5,6 +5,8 @@ import com.avatar.challenge.planner.challenge.domain.Daily;
 import com.avatar.challenge.planner.challenge.domain.DailyList;
 import com.avatar.challenge.planner.challenge.domain.DailyRepository;
 import com.avatar.challenge.planner.challenge.dto.ChallengeResponse;
+import com.avatar.challenge.planner.challenge.dto.ChallengeStatusEvent;
+import com.avatar.challenge.planner.challenge.dto.DailyRequest;
 import com.avatar.challenge.planner.challenge.dto.DailyResponse;
 import com.avatar.challenge.planner.exception.BizException;
 import com.avatar.challenge.planner.exception.UnauthorizedException;
@@ -14,14 +16,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import static org.mockito.ArgumentMatchers.anyIterable;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 
@@ -31,6 +36,9 @@ class DailyServiceTest {
 
     @Mock
     DailyRepository repository;
+
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     DailyService service;
@@ -137,6 +145,29 @@ class DailyServiceTest {
                 .as(StepVerifier::create)
                 .expectNext(0L)
                 .verifyComplete();
+    }
+
+    @Test
+    void update() {
+        ReflectionTestUtils.setField(CHALLENGE, "id", 1L);
+        Daily daily = Daily.of(CHALLENGE.getId(), 1, CHALLENGE.getOwnerId());
+
+        when(loginUser.getId())
+                .thenReturn(CHALLENGE.getOwnerId());
+        when(repository.findById(anyLong()))
+                .thenReturn(Mono.just(daily));
+        when(repository.save(any()))
+                .thenReturn(Mono.just(daily));
+        when(repository.findAllByChallengeId(anyLong()))
+                .thenReturn(Flux.just(daily));
+
+        service.update(1L, new DailyRequest(true, "comment"), loginUser)
+                .as(StepVerifier::create)
+                .verifyComplete();
+
+        verify(eventPublisher)
+                .publishEvent(any(ChallengeStatusEvent.class));
+
     }
 
     static Flux<Daily> challengeToDailyList(ChallengeResponse challengeResponse){
