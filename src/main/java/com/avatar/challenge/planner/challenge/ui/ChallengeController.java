@@ -26,7 +26,6 @@ public class ChallengeController {
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<ResponseEntity> create(@RequestBody ChallengeRequest request, @AuthenticationPrincipal LoginUser loginUser){
         return service.create(request, loginUser)
-                .map(ChallengeResponse::getId)
                 .map(id -> ResponseEntity.created(URI.create("/challenges/"+id)).build());
     }
 

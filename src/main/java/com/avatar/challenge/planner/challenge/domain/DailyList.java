@@ -2,10 +2,12 @@ package com.avatar.challenge.planner.challenge.domain;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ToString
 @Getter
 @NoArgsConstructor
 public class DailyList {
@@ -26,5 +28,10 @@ public class DailyList {
 
     public int size() {
         return this.dailies.size();
+    }
+
+    public boolean isOwner(Long ownerId){
+        return dailies.stream()
+                .allMatch(daily -> daily.isOwner(ownerId));
     }
 }

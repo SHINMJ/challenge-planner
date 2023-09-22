@@ -5,6 +5,7 @@ import com.avatar.challenge.planner.challenge.domain.ChallengeRepository;
 import com.avatar.challenge.planner.challenge.domain.ChallengeStatus;
 import com.avatar.challenge.planner.challenge.dto.ChallengeRequest;
 import com.avatar.challenge.planner.challenge.dto.ChallengeResponse;
+import com.avatar.challenge.planner.challenge.dto.DailyResponse;
 import com.avatar.challenge.planner.exception.UnauthorizedException;
 import com.avatar.challenge.planner.user.dto.LoginUser;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,15 @@ import reactor.core.publisher.Mono;
 @Service
 public class ChallengeService {
     private final ChallengeRepository repository;
+    private final DailyService dailyService;
 
-    public Mono<ChallengeResponse> create(ChallengeRequest request, LoginUser loginUser) {
-        System.out.println(loginUser);
+    public Mono<Long> create(ChallengeRequest request, LoginUser loginUser) {
         return repository.save(request.toEntity(loginUser.getId()))
-                .map(ChallengeResponse::of);
-
+                .map(ChallengeResponse::of)
+                .flatMapMany(challengeResponse ->
+                    dailyService.createWithChallenge(challengeResponse.getId(), challengeResponse.getPeriod(), challengeResponse.getOwnerId()))
+                .last()
+                .map(DailyResponse::challengeId);
     }
 
     @Transactional(readOnly = true)

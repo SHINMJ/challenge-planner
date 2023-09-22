@@ -4,11 +4,13 @@ import com.avatar.challenge.planner.common.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.Objects;
 
+@ToString
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,12 +30,26 @@ public class Daily extends BaseEntity {
         return new Daily(null, challengeId, day, Boolean.FALSE, null, ownerId);
     }
 
+    public Daily update(Boolean completed, String comment) {
+        this.completedAt = completed;
+        this.comment = comment;
+        return this;
+    }
+
     public void completion() {
         this.completedAt = Boolean.TRUE;
     }
 
     public void incomplete(){
         this.completedAt = Boolean.FALSE;
+    }
+
+    public boolean isOwner(Long ownerId) {
+        return this.ownerId.equals(ownerId);
+    }
+
+    public boolean isIncomplete() {
+        return !this.completedAt;
     }
 
     @Override
@@ -48,4 +64,5 @@ public class Daily extends BaseEntity {
     public int hashCode() {
         return Objects.hash(challengeId, days, ownerId);
     }
+
 }

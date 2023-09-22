@@ -1,10 +1,9 @@
 package com.avatar.challenge.planner.challenge.application;
 
-import com.avatar.challenge.planner.challenge.domain.Challenge;
-import com.avatar.challenge.planner.challenge.domain.ChallengeRepository;
-import com.avatar.challenge.planner.challenge.domain.ChallengeStatus;
+import com.avatar.challenge.planner.challenge.domain.*;
 import com.avatar.challenge.planner.challenge.dto.ChallengeRequest;
 import com.avatar.challenge.planner.challenge.dto.ChallengeResponse;
+import com.avatar.challenge.planner.challenge.dto.DailyResponse;
 import com.avatar.challenge.planner.exception.UnauthorizedException;
 import com.avatar.challenge.planner.user.domain.User;
 import com.avatar.challenge.planner.user.dto.LoginUser;
@@ -15,12 +14,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
 
+import static com.avatar.challenge.planner.challenge.application.DailyServiceTest.challengeToDailyList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -35,6 +36,9 @@ public class ChallengeServiceTest {
     @Mock
     private ChallengeRepository repository;
 
+    @Mock
+    private DailyService dailyService;
+
     @InjectMocks
     ChallengeService service;
 
@@ -43,20 +47,22 @@ public class ChallengeServiceTest {
 
     @Test
     void create() {
+        ReflectionTestUtils.setField(CHALLENGE, "id", 1L);
+
+        ChallengeResponse challengeResponse = ChallengeResponse.of(CHALLENGE);
         ChallengeRequest request = new ChallengeRequest("푸시업 30일 챌린지", 30, LocalDate.now());
+        Flux<Daily> dailyFlux = challengeToDailyList(challengeResponse);
+
 
         when(repository.save(any()))
                 .thenReturn(Mono.just(request.toEntity(1L)));
+        when(dailyService.createWithChallenge(anyLong(), any(), anyLong()))
+                .thenReturn(dailyFlux.map(DailyResponse::of));
 
-        Mono<ChallengeResponse> response = service.create(request, loginUser);
+        Mono<Long> response = service.create(request, loginUser);
 
         StepVerifier.create(response)
-                .consumeNextWith(result -> {
-                    assertAll(
-                            () -> assertEquals(result.getName(), request.getName()),
-                            () -> assertEquals(result.getStatus(), ChallengeStatus.ONGOING.toString())
-                    );
-                })
+                .expectNext(1L)
                 .verifyComplete();
     }
 

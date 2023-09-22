@@ -50,4 +50,22 @@ class DailyListTest {
 
         assertThat(list.numberOfCompleted()).isEqualTo(2);
     }
+
+    @Test
+    void isOwner() {
+        DailyList list = new DailyList();
+        for (int i = 0; i < 5; i++) {
+            Daily daily = Daily.of(1L, i + 1, 1L);
+            if ((i+1) % 2 == 0){
+                daily.completion();
+            }
+            list.add(daily);
+        }
+
+        assertAll(
+                () -> assertTrue(list.isOwner(1L)),
+                () -> assertFalse(list.isOwner(2L))
+        );
+
+    }
 }
