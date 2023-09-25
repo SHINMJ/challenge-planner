@@ -1,16 +1,12 @@
 package com.avatar.challenge.planner.challenge.domain;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
-import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
@@ -95,6 +91,23 @@ public class ChallengeRepositoryTest {
                 .as(StepVerifier::create)
                 .expectNextCount(1)
                 .verifyComplete();
+    }
+
+    @Test
+    void findAllByEndDate(){
+        LocalDate now = LocalDate.now();
+        Challenge c1 = Challenge.of("pushup 30일 100개 하기", 3, now, 1L);
+        Challenge c2 = Challenge.of("스쿼트 30일 50개 하기", 5, now, 1L);
+
+        insertChallenge(c1, c2);
+
+        challengeRepository.findAllByEndDate(now.plusDays(3))
+                .log()
+                .as(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete();
+
+
     }
 
     private void insertChallenge(Challenge... challenge){

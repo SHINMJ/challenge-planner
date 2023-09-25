@@ -17,8 +17,9 @@ public class ChallengeResponse {
     private LocalDate endDate;
     private String status;
     private Long ownerId;
+    private Boolean sent;
 
     public static ChallengeResponse of(Challenge challenge){
-        return new ChallengeResponse(challenge.getId(), challenge.getName(), challenge.getPeriod(), challenge.getStartDate(), challenge.getEndDate(), challenge.getStatus().toString(), challenge.getOwnerId());
+        return new ChallengeResponse(challenge.getId(), challenge.getName(), challenge.getPeriod(), challenge.getStartDate(), challenge.getEndDate(), challenge.getStatus().toString(), challenge.getOwnerId(), challenge.getSentNotification());
     }
 }

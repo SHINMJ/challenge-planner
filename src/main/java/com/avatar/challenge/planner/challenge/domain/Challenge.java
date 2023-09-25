@@ -29,6 +29,7 @@ public class Challenge extends BaseEntity {
     private LocalDate endDate;
     private ChallengeStatus status;
     private Long ownerId;
+    private Boolean sentNotification = Boolean.FALSE;
 
     public Challenge(String name, Integer period, LocalDate startDate, Long ownerId) {
         validate(name, period, startDate);
@@ -52,8 +53,9 @@ public class Challenge extends BaseEntity {
         return new Challenge(name, period, startDate, ownerId);
     }
 
-    public void changeStatus(ChallengeStatus status){
+    public Challenge changeStatus(ChallengeStatus status){
         this.status = status;
+        return this;
     }
 
     public void updateChallenge(Challenge challenge){
@@ -66,6 +68,11 @@ public class Challenge extends BaseEntity {
 
     public boolean isOwner(Long ownerId) {
         return this.ownerId.equals(ownerId);
+    }
+
+    public Challenge sent(){
+        this.sentNotification = Boolean.TRUE;
+        return this;
     }
 
     private void validate(String name, Integer period, LocalDate startDate) {

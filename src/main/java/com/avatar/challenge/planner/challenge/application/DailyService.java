@@ -1,9 +1,6 @@
 package com.avatar.challenge.planner.challenge.application;
 
-import com.avatar.challenge.planner.challenge.domain.ChallengeStatus;
-import com.avatar.challenge.planner.challenge.domain.Daily;
-import com.avatar.challenge.planner.challenge.domain.DailyList;
-import com.avatar.challenge.planner.challenge.domain.DailyRepository;
+import com.avatar.challenge.planner.challenge.domain.*;
 import com.avatar.challenge.planner.challenge.dto.ChallengeStatusEvent;
 import com.avatar.challenge.planner.challenge.dto.DailyRequest;
 import com.avatar.challenge.planner.challenge.dto.DailyResponse;
@@ -72,11 +69,16 @@ public class DailyService {
 
     @Transactional(readOnly = true)
     public Mono<Long> findIncompleteByChallengeId(Long challengeId, LoginUser loginUser){
-        return repository.findAllByChallengeId(challengeId)
+        return findIncompleteByChallengeId(challengeId)
                 .filter(daily -> daily.isOwner(loginUser.getId()))
                 .switchIfEmpty(Flux.error(new UnauthorizedException()))
                 .filter(Daily::isIncomplete)
                 .count();
+    }
+
+    @Transactional(readOnly = true)
+    protected Flux<Daily> findIncompleteByChallengeId(Long challengeId){
+        return repository.findAllByChallengeId(challengeId);
     }
 
     private Mono<Daily> findById(Long id, LoginUser loginUser){

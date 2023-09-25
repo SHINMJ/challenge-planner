@@ -17,3 +17,7 @@ jwt:
   secret: YXZhdGFydHJpcGF1dGhvcml6YXRpb25qd3RtYW5hZ2VzZWNyZXRrZXkK
   expired-in: 600000 # 10 min
   refresh-expired-in: 86400000 # 24 hour
+
+schedules:
+  cron:
+    notification: 1 0 0 * * ?
