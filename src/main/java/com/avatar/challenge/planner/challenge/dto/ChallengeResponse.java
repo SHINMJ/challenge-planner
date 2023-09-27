@@ -20,6 +20,6 @@ public class ChallengeResponse {
     private Boolean sent;
 
     public static ChallengeResponse of(Challenge challenge){
-        return new ChallengeResponse(challenge.getId(), challenge.getName(), challenge.getPeriod(), challenge.getStartDate(), challenge.getEndDate(), challenge.getStatus().toString(), challenge.getOwnerId(), challenge.getSentNotification());
+        return new ChallengeResponse(challenge.getId(), challenge.getName(), challenge.getPeriod(), challenge.getStartDate(), challenge.getEndDate(), challenge.getStatus().getKey(), challenge.getOwnerId(), challenge.getSentNotification());
     }
 }

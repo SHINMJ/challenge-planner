@@ -11,7 +11,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,12 +24,20 @@ class DailyRepositoryTest {
     @Autowired
     ChallengeRepository challengeRepository;
 
-    static final Challenge CHALLENGE = Challenge.of("pushup 30일 100개 하기", 5, LocalDate.now(), 1L);
+    Challenge testChallenge;
+
+    @BeforeEach
+    void setUp() {
+        testChallenge = Challenge.of("pushup 30일 100개 하기", 5, LocalDate.now(), 1L);
+
+        repository.deleteAll().subscribe().dispose();
+        challengeRepository.deleteAll().subscribe().dispose();
+    }
 
     @Test
     void create() {
 
-        saveChallenge(CHALLENGE)
+        saveChallenge(testChallenge)
                 .flatMap(it -> {
                     Daily daily = Daily.of(it.getId(), 1, it.getOwnerId());
                     return repository.save(daily);
@@ -38,7 +45,7 @@ class DailyRepositoryTest {
                 .as(StepVerifier::create)
                 .consumeNextWith(daily -> {
                     assertAll(
-                            () -> assertEquals(daily.getOwnerId(), CHALLENGE.getOwnerId()),
+                            () -> assertEquals(daily.getOwnerId(), testChallenge.getOwnerId()),
                             () -> assertFalse(daily.getCompletedAt())
                     );
                 })
@@ -50,7 +57,7 @@ class DailyRepositoryTest {
         saveDailies()
                 .log()
                 .as(StepVerifier::create)
-                .expectNextCount(CHALLENGE.getPeriod())
+                .expectNextCount(testChallenge.getPeriod())
                 .verifyComplete();
     }
 
@@ -60,7 +67,7 @@ class DailyRepositoryTest {
                 .flatMapMany(daily -> repository.findAllByChallengeId(daily.getChallengeId()))
                 .log("findAllByChallengeId")
                 .as(StepVerifier::create)
-                .expectNextCount(CHALLENGE.getPeriod())
+                .expectNextCount(testChallenge.getPeriod())
                 .verifyComplete();
 
     }
@@ -70,7 +77,7 @@ class DailyRepositoryTest {
     }
 
     private Flux<Daily> saveDailies(){
-        return saveChallenge(CHALLENGE)
+        return saveChallenge(testChallenge)
                 .flatMapMany(challenge -> {
                     Integer period = challenge.getPeriod();
                     DailyList dailyList = new DailyList();

@@ -25,9 +25,7 @@ class UserRepositoryTest {
     @BeforeEach
     void setUp() {
         repository.deleteAll()
-                .thenMany(repository.findAll())
-                .as(StepVerifier::create)
-                .expectNextCount(0);
+                .subscribe().dispose();
     }
 
     @Test

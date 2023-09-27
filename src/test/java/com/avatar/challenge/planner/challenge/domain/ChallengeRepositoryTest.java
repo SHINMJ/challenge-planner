@@ -26,8 +26,7 @@ public class ChallengeRepositoryTest {
     void setUp() {
         challengeRepository.deleteAll()
                 .thenMany(challengeRepository.findAll())
-                .as(StepVerifier::create)
-                .expectNextCount(0);
+                .subscribe().dispose();
     }
 
     @Test

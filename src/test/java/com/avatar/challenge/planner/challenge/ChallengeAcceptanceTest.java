@@ -59,7 +59,7 @@ public class ChallengeAcceptanceTest extends AcceptanceTest {
                     List<ChallengeResponse> responseBody = result.getResponseBody();
                     assertThat(responseBody).allSatisfy(challenge -> {
                         assertThat(challenge.getName()).isEqualTo(challengeName);
-                        assertThat(challenge.getStatus()).isEqualTo(ChallengeStatus.ONGOING.getValue());
+                        assertThat(challenge.getStatus()).isEqualTo(ChallengeStatus.ONGOING.getKey());
                     });
                 })
                 .returnResult()
@@ -74,7 +74,7 @@ public class ChallengeAcceptanceTest extends AcceptanceTest {
                 .consumeWith(result -> {
                     ChallengeResponse responseBody = result.getResponseBody();
                     assertEquals(responseBody.getName(), challengeName);
-                    assertEquals(responseBody.getStatus(), ChallengeStatus.ONGOING.getValue());
+                    assertEquals(responseBody.getStatus(), ChallengeStatus.ONGOING.getKey());
                 });
 
         webTestClient.put()
@@ -171,7 +171,7 @@ public class ChallengeAcceptanceTest extends AcceptanceTest {
                 .consumeWith(result -> {
                     ChallengeResponse responseBody = result.getResponseBody();
                     assertEquals(responseBody.getName(), challengeName);
-                    assertEquals(responseBody.getStatus(), ChallengeStatus.SUCCESS.getValue());
+                    assertEquals(responseBody.getStatus(), ChallengeStatus.SUCCESS.getKey());
                 });
     }
 }
