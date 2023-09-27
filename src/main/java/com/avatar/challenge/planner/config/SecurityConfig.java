@@ -22,11 +22,14 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
+
 @RequiredArgsConstructor
 @EnableReactiveMethodSecurity
 @Configuration
 public class SecurityConfig {
-    private static final String PERMIT_PATTERN = "/auth/**";
+    private static final String[] PERMIT_PATTERNS = {"/auth/**",
+            "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**"};
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -52,7 +55,7 @@ public class SecurityConfig {
                                 })))
                 )
                 .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                        .pathMatchers(PERMIT_PATTERN).permitAll()
+                        .pathMatchers(PERMIT_PATTERNS).permitAll()
                         .anyExchange().authenticated()
                 )
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
@@ -86,10 +89,11 @@ public class SecurityConfig {
     }
 
     private ServerAuthenticationConverter serverAuthenticationConverter(){
+        String NONE = "NONE";
         return exchange -> {
             ServerHttpRequest request = exchange.getRequest();
             String token = resolveToken(request);
-            if (request.getPath().toString().startsWith(PERMIT_PATTERN)){
+            if (Arrays.stream(PERMIT_PATTERNS).anyMatch(pattern -> request.getPath().value().contains(pattern))){
                 return Mono.empty();
             }
 
